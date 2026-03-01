@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { authClient } from "../lib/auth-client";
-import { useNavigate, Navigate } from "react-router";
+import { useNavigate, Navigate, Link } from "react-router";
 
 export default function Signup() {
     const { data, isPending } = authClient.useSession();
@@ -37,7 +37,7 @@ export default function Signup() {
     if (isPending) return null;
     if (data) return <Navigate to="/protected" replace={true} />;
     return (
-        <div className="h-screen flex justify-center items-center">
+        <div className="h-screen flex justify-center items-center flex-col gap-4">
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <h1 className="text-xl font-medium">Sign up</h1>
                 <input
@@ -68,6 +68,9 @@ export default function Signup() {
                     {loading ? "Loading..." : "Sign up"}
                 </button>
             </form>
+
+            <Link className="cursor-pointer underline font-medium" to="/login">Already have account? Login</Link>
+
         </div>
     );
 }
