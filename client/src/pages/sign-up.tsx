@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { authClient } from "../lib/auth-client";
+import { useNavigate, Navigate } from "react-router";
 
 export default function Signup() {
-    const { isPending, data } = authClient.useSession();
-    console.log("session ", isPending, data);
-
+    const { data, isPending } = authClient.useSession();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
-
         const formData = new FormData(e.target);
         const name = formData.get("name") as string;
         const email = formData.get("email") as string;
@@ -23,6 +22,7 @@ export default function Signup() {
                 onSuccess(ctx) {
                     console.log("Sign up success");
                     console.log(ctx.data);
+                    navigate("/protected");
                 },
                 onRequest() {
                     setLoading(true);
@@ -33,6 +33,9 @@ export default function Signup() {
             },
         );
     }
+
+    if (isPending) return null;
+    if (data) return <Navigate to="/protected" replace={true} />;
     return (
         <div className="h-screen flex justify-center items-center">
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">

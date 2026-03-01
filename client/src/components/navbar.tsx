@@ -4,20 +4,27 @@ import { authClient } from "../lib/auth-client";
 export default function Navbar() {
     const { isPending, data } = authClient.useSession();
     return (
-        <nav className="p-4 border-2 flex justify-end">
+        <nav className="p-4 border flex justify-end">
             {isPending ? (
                 <div className="font-medium">Loading...</div>
             ) : (
-                <div>
+                <div className="flex items-center gap-10">
+                    <Link to="/">Landing</Link>
+                    <Link to="/about">About</Link>
                     {data ? (
-                        <div>
-                            <span>Hello, {data.user.name}</span>
-                            <button>logout</button>
+                        <div className="flex items-center gap-8">
+                            <Link to="/protected">Dashboard</Link>
+                            <button
+                                onClick={() => authClient.signOut()}
+                                className="text-red-600"
+                            >
+                                Logout
+                            </button>
                         </div>
                     ) : (
-                        <div>
-                            <Link to="/login">Login</Link>
-                        </div>
+                        <Link to="/login" className="text-red-600">
+                            Login
+                        </Link>
                     )}
                 </div>
             )}
