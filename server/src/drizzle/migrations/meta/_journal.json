@@ -15,6 +15,13 @@
       "when": 1772386574637,
       "tag": "0001_typical_puff_adder",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772400055611,
+      "tag": "0002_conscious_the_liberteens",
+      "breakpoints": true
     }
   ]
 }

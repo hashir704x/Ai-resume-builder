@@ -1,4 +1,12 @@
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import {
+    pgTable,
+    text,
+    timestamp,
+    boolean,
+    index,
+    uuid,
+    serial,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
     id: text("id").primaryKey(),
@@ -11,7 +19,7 @@ export const user = pgTable("user", {
         .defaultNow()
         .$onUpdate(() => /* @__PURE__ */ new Date())
         .notNull(),
-    country: text("country").notNull()
+    country: text("country").notNull(),
 });
 
 export const session = pgTable(
@@ -72,6 +80,62 @@ export const verification = pgTable(
     },
     (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
+
+export const resume = pgTable("resume", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    public: boolean("public").notNull().default(false),
+    template: text("template").notNull().default("classic"),
+    accentColor: text("accentColor").notNull().default("#3B82F6"),
+    professionalSummary: text("professionalSummary"),
+    skills: text("skills").array(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    userId: text("userId")
+        .notNull()
+        .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const personalInfo = pgTable("personalInfo", {
+    resumeId: uuid("resumeId")
+        .primaryKey()
+        .references(() => resume.id, { onDelete: "cascade" }),
+    image: text("image"),
+    fullname: text("fullname"),
+    profession: text("profession"),
+    email: text("email"),
+    phone: text("phone"),
+    location: text("location"),
+    linkedIn: text("linkedIn"),
+    website: text("website"),
+});
+
+export const experience = pgTable("experience", {
+    id: serial("id").primaryKey(),
+    company: text("company").notNull(),
+    position: text("position"),
+    startDate: text("startDate"),
+    endDate: text("endDate"),
+    description: text("description"),
+    isCurrent: boolean("isCurrent"),
+    resumeId: uuid("resumeId").references(() => resume.id, { onDelete: "cascade" }),
+});
+
+export const project = pgTable("project", {
+    id: serial("id").primaryKey(),
+    type: text("type"),
+    description: text("description"),
+    resumeId: uuid("resumeId").references(() => resume.id, { onDelete: "cascade" }),
+});
+
+export const education = pgTable("education", {
+    id: serial("id").primaryKey(),
+    institution: text("institution"),
+    degree: text("degree"),
+    field: text("field"),
+    graduationDate: text("graduationDate"),
+    gpa: text("gpa"),
+    resumeId: uuid("resumeId").references(() => resume.id, { onDelete: "cascade" }),
+});
 
 // export const userRelations = relations(user, ({ many }) => ({
 //     sessions: many(session),

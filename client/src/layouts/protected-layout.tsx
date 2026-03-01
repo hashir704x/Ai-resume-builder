@@ -15,7 +15,6 @@ export default function ProtectedLayout() {
         return (
             <div className="flex flex-col justify-center items-center h-[90vh]">
                 <h1 className="text-3xl font-bold text-red-500">Error</h1>
-
                 <p className="text-center my-2">{error.message}</p>
             </div>
         );
