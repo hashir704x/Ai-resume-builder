@@ -1,17 +1,11 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { auth } from "./lib/auth";
-// import { logger } from "hono/logger";
-import { createMiddleware } from "hono/factory";
-
-
-const authLogger = createMiddleware(async function (c, next) {
-    console.log("Auth hit", c.req.path);
-    await next();
-});
+import { logger } from "hono/logger";
+import { userRouter } from "./routes/user.routes";
 
 const app = new Hono();
-// app.use(logger());
+app.use(logger());
 
 app.use(
     "/api/*",
@@ -21,7 +15,9 @@ app.use(
     }),
 );
 
-app.on(["POST", "GET"], "/api/auth/*", authLogger, (c) => auth.handler(c.req.raw));
+app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
+app.route("/api/user", userRouter);
 
 app.get("/api/check", (c) => {
     return c.json("Hello Hono!");
