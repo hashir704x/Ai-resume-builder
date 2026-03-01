@@ -4,7 +4,6 @@
     "dev": "bun run --hot src/index.ts"
   },
   "dependencies": {
-    "@hono/zod-validator": "^0.7.6",
     "@neondatabase/serverless": "^1.0.2",
     "better-auth": "^1.4.20",
     "dotenv": "^17.3.1",

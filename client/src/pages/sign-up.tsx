@@ -12,8 +12,10 @@ export default function Signup() {
         const name = formData.get("name") as string;
         const email = formData.get("email") as string;
         const password = formData.get("password") as string;
+        const country = formData.get("country") as string;
+
         await authClient.signUp.email(
-            { name: name, email: email, password: password },
+            { name: name, email: email, password: password, country: country },
             {
                 onError(ctx) {
                     alert("Error is sign up");
@@ -64,13 +66,22 @@ export default function Signup() {
                     className="p-1 border"
                 />
 
+                <input
+                    required
+                    type="text"
+                    name="country"
+                    placeholder="Enter Country Name"
+                    className="p-1 border"
+                />
+
                 <button disabled={loading} className="border p-2 cursor-pointer">
                     {loading ? "Loading..." : "Sign up"}
                 </button>
             </form>
 
-            <Link className="cursor-pointer underline font-medium" to="/login">Already have account? Login</Link>
-
+            <Link className="cursor-pointer underline font-medium" to="/login">
+                Already have account? Login
+            </Link>
         </div>
     );
 }

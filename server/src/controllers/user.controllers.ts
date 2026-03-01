@@ -2,22 +2,28 @@ import { eq } from "drizzle-orm";
 import { db } from "../drizzle/db";
 import { user } from "../drizzle/schema";
 import { Context } from "hono";
+import { paramsUserIdValidator } from "../validators/user.validators";
+import { ZodError } from "zod";
 
 export async function getUserDataById(c: Context) {
     try {
-        // @ts-ignore
-        const { userId } = c.req.valid("param");
+        const rawUserId = c.req.param("userId");
+        const { userId } = paramsUserIdValidator.parse({ userId: rawUserId });
         const res = await db.select().from(user).where(eq(user.id, userId));
-        console.log(res);
         if (res.length === 0) {
             return c.json({ success: false, message: "User does not exsits" }, 404);
         }
         return c.json({ success: true, data: res[0] });
     } catch (error) {
-        console.error("Error came:", error);
+        if (error instanceof ZodError) {
+            return c.json(
+                {
+                    success: false,
+                    message: error.issues[0].message,
+                },
+                400,
+            );
+        }
         return c.json({ success: false, message: "Something went wrong" }, 500);
     }
 }
-
-
-
