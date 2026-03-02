@@ -6,6 +6,7 @@ import {
     deleteResume,
     getResumeDetailsById,
     getPublicResumeDetailsById,
+    updateResume,
 } from "../controllers/user.controllers";
 import { authMiddleware } from "../middlewares/auth.middleware";
 
@@ -18,6 +19,7 @@ userRouter.get("/resume/:resumeId", getResumeDetailsById);
 userRouter.get("/resume", getUserAllResumes);
 userRouter.post("/resume", createResume);
 userRouter.delete("/resume/:resumeId", deleteResume);
+userRouter.put("/resume/:resumeId", updateResume);
 
 userRouter.get("/profile/:userId", getUserDataById);
 

@@ -13,6 +13,7 @@ import {
     paramsUserIdValidator,
     resumeBodyValidator,
     paramsResumeIdValidator,
+    resumeBodyUpdateValidator,
 } from "../validators/user.validators";
 import { ZodError } from "zod";
 
@@ -221,3 +222,100 @@ export async function getPublicResumeDetailsById(c: Context) {
     }
 }
 
+export async function updateResume(c: Context) {
+    try {
+        const rawResumeId = c.req.param("resumeId");
+        const userData = c.get("user");
+        const { resumeId } = paramsResumeIdValidator.parse({ resumeId: rawResumeId });
+        const rawBody = await c.req.json();
+        const parsedBody = resumeBodyUpdateValidator.parse(rawBody);
+
+        db.transaction(async function (tx) {
+            const [targetResume] = await tx
+                .select()
+                .from(resume)
+                .where(and(eq(resume.id, resumeId), eq(resume.userId, userData.id)));
+            if (!targetResume) {
+                throw new Error("You are not authorized to update this resource");
+            }
+
+            await tx
+                .update(resume)
+                .set({
+                    ...(parsedBody.title && { title: parsedBody.title }),
+                    ...(parsedBody.template && { template: parsedBody.template }),
+                    ...(parsedBody.public !== undefined && { public: parsedBody.public }),
+                    ...(parsedBody.accentColor && {
+                        accentColor: parsedBody.accentColor,
+                    }),
+                    ...(parsedBody.professionalSummary && {
+                        professionalSummary: parsedBody.professionalSummary,
+                    }),
+                    ...(parsedBody.skills && { skills: parsedBody.skills }),
+                })
+                .where(and(eq(resume.id, resumeId), eq(resume.userId, userData.id)));
+
+            if (parsedBody.personalInfo) {
+                await tx
+                    .insert(personalInfo)
+                    .values({
+                        resumeId: resumeId,
+                        ...parsedBody.personalInfo,
+                    })
+                    .onConflictDoUpdate({
+                        target: personalInfo.resumeId,
+                        set: parsedBody.personalInfo,
+                    });
+            }
+
+            if (parsedBody.experience) {
+                await tx.delete(experience).where(eq(experience.resumeId, resumeId));
+                if (parsedBody.experience.length > 0) {
+                    await tx.insert(experience).values(
+                        parsedBody.experience.map((exp) => ({
+                            ...exp,
+                            resumeId: resumeId,
+                        })),
+                    );
+                }
+            }
+
+            if (parsedBody.project) {
+                await tx.delete(project).where(eq(project.resumeId, resumeId));
+                if (parsedBody.project.length > 0) {
+                    await tx.insert(project).values(
+                        parsedBody.project.map((prj) => ({
+                            ...prj,
+                            resumeId: resumeId,
+                        })),
+                    );
+                }
+            }
+
+            if (parsedBody.education) {
+                await tx.delete(education).where(eq(education.resumeId, resumeId));
+                if (parsedBody.education.length > 0) {
+                    await tx.insert(education).values(
+                        parsedBody.education.map((edu) => ({
+                            ...edu,
+                            resumeId: resumeId,
+                        })),
+                    );
+                }
+            }
+        });
+
+        return c.json({ success: true });
+    } catch (error) {
+        if (error instanceof ZodError) {
+            return c.json(
+                {
+                    success: false,
+                    message: error.issues[0].message,
+                },
+                400,
+            );
+        }
+        return c.json({ success: false, message: "Something went wrong" }, 500);
+    }
+}

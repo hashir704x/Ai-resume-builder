@@ -24,7 +24,7 @@ const personalInfoUpdateSchema = z.object({
 });
 
 const experienceUpdateSchema = z.object({
-    company: z.string().optional(),
+    company: z.string(),
     position: z.string().optional(),
     startDate: z.string().optional(),
     endDate: z.string().optional(),
