@@ -3,7 +3,7 @@ import { authClient } from "../lib/auth-client";
 import { useNavigate, Navigate, Link } from "react-router";
 
 export default function Login() {
-    const { data, isPending } = authClient.useSession();
+    const { data, isPending, error } = authClient.useSession();
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
@@ -19,9 +19,8 @@ export default function Login() {
                     alert("Error is login");
                     console.error(ctx.error.message);
                 },
-                onSuccess(ctx) {
+                onSuccess() {
                     console.log("Login success");
-                    console.log(ctx.data);
                     navigate("/protected");
                 },
                 onRequest() {
@@ -35,6 +34,13 @@ export default function Login() {
     }
 
     if (isPending) return null;
+    if (error)
+        return (
+            <div className="flex flex-col justify-center items-center h-[90vh]">
+                <h1 className="text-3xl font-bold text-red-500">Error</h1>
+                <p className="text-center my-2">{error.message}</p>
+            </div>
+        );
     if (data) return <Navigate to="/protected" replace={true} />;
 
     return (
@@ -63,7 +69,9 @@ export default function Login() {
                 </button>
             </form>
 
-            <Link className="cursor-pointer underline font-medium" to="/sign-up">New here? Sign up</Link>
+            <Link className="cursor-pointer underline font-medium" to="/sign-up">
+                New here? Sign up
+            </Link>
         </div>
     );
 }

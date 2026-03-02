@@ -3,9 +3,10 @@ import { authClient } from "../lib/auth-client";
 import { useNavigate, Navigate, Link } from "react-router";
 
 export default function Signup() {
-    const { data, isPending } = authClient.useSession();
+    const { data, isPending, error } = authClient.useSession();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+
     async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -14,29 +15,40 @@ export default function Signup() {
         const password = formData.get("password") as string;
         const country = formData.get("country") as string;
 
-        await authClient.signUp.email(
-            { name: name, email: email, password: password, country: country },
-            {
-                onError(ctx) {
-                    alert("Error is sign up");
-                    console.error(ctx.error.message);
+        try {
+            await authClient.signUp.email(
+                { name: name, email: email, password: password, country: country },
+                {
+                    onError(ctx) {
+                        alert("Error is sign up");
+                        console.error(ctx.error.message);
+                    },
+                    onSuccess() {
+                        console.log("Sign up success");
+                        navigate("/protected");
+                    },
+                    onRequest() {
+                        setLoading(true);
+                    },
+                    onResponse() {
+                        setLoading(false);
+                    },
                 },
-                onSuccess(ctx) {
-                    console.log("Sign up success");
-                    console.log(ctx.data);
-                    navigate("/protected");
-                },
-                onRequest() {
-                    setLoading(true);
-                },
-                onResponse() {
-                    setLoading(false);
-                },
-            },
-        );
+            );
+        } catch (error) {
+            alert("Something went wrong");
+            setLoading(false);
+        }
     }
 
     if (isPending) return null;
+    if (error)
+        return (
+            <div className="flex flex-col justify-center items-center h-[90vh]">
+                <h1 className="text-3xl font-bold text-red-500">Error</h1>
+                <p className="text-center my-2">{error.message}</p>
+            </div>
+        );
     if (data) return <Navigate to="/protected" replace={true} />;
     return (
         <div className="h-screen flex justify-center items-center flex-col gap-4">
