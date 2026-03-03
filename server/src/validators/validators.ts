@@ -57,3 +57,11 @@ export const resumeBodyUpdateValidator = z.object({
     project: z.array(projectUpdateSchema).optional(),
     education: z.array(educationUpdateSchema).optional(),
 });
+
+export const professionalSummaryValidator = z.object({
+    summary: z.string().min(50).max(500),
+});
+
+export const jobDescriptionValidator = z.object({
+    description: z.string().min(50).max(500),
+});
