@@ -111,7 +111,7 @@ export const personalInfo = pgTable("personalInfo", {
 
 export const experience = pgTable("experience", {
     id: serial("id").primaryKey(),
-    company: text("company").notNull(),
+    company: text("company"),
     position: text("position"),
     startDate: text("startDate"),
     endDate: text("endDate"),

@@ -230,16 +230,22 @@ export async function updateResume(c: Context) {
         const rawBody = await c.req.json();
         const parsedBody = resumeBodyUpdateValidator.parse(rawBody);
 
-        db.transaction(async function (tx) {
-            const [targetResume] = await tx
-                .select()
-                .from(resume)
-                .where(and(eq(resume.id, resumeId), eq(resume.userId, userData.id)));
-            if (!targetResume) {
-                throw new Error("You are not authorized to update this resource");
-            }
+        const [targetResume] = await db
+            .select()
+            .from(resume)
+            .where(and(eq(resume.id, resumeId), eq(resume.userId, userData.id)));
+        if (!targetResume) {
+            return c.json(
+                {
+                    message: "You are not authorized to update this resource",
+                    success: false,
+                },
+                403,
+            );
+        }
 
-            await tx
+        const batchQueries: any[] = [
+            db
                 .update(resume)
                 .set({
                     ...(parsedBody.title && { title: parsedBody.title }),
@@ -253,59 +259,69 @@ export async function updateResume(c: Context) {
                     }),
                     ...(parsedBody.skills && { skills: parsedBody.skills }),
                 })
-                .where(and(eq(resume.id, resumeId), eq(resume.userId, userData.id)));
+                .where(and(eq(resume.id, resumeId), eq(resume.userId, userData.id))),
+        ];
 
-            if (parsedBody.personalInfo) {
-                await tx
+        if (parsedBody.personalInfo) {
+            batchQueries.push(
+                db
                     .insert(personalInfo)
-                    .values({
-                        resumeId: resumeId,
-                        ...parsedBody.personalInfo,
-                    })
+                    .values({ resumeId: resumeId, ...parsedBody.personalInfo })
                     .onConflictDoUpdate({
                         target: personalInfo.resumeId,
                         set: parsedBody.personalInfo,
-                    });
-            }
+                    }),
+            );
+        }
 
-            if (parsedBody.experience) {
-                await tx.delete(experience).where(eq(experience.resumeId, resumeId));
-                if (parsedBody.experience.length > 0) {
-                    await tx.insert(experience).values(
+        if (parsedBody.experience) {
+            batchQueries.push(
+                db.delete(experience).where(eq(experience.resumeId, resumeId)),
+            );
+            if (parsedBody.experience.length > 0) {
+                batchQueries.push(
+                    db.insert(experience).values(
                         parsedBody.experience.map((exp) => ({
                             ...exp,
                             resumeId: resumeId,
                         })),
-                    );
-                }
+                    ),
+                );
             }
+        }
 
-            if (parsedBody.project) {
-                await tx.delete(project).where(eq(project.resumeId, resumeId));
-                if (parsedBody.project.length > 0) {
-                    await tx.insert(project).values(
-                        parsedBody.project.map((prj) => ({
-                            ...prj,
-                            resumeId: resumeId,
-                        })),
-                    );
-                }
-            }
-
-            if (parsedBody.education) {
-                await tx.delete(education).where(eq(education.resumeId, resumeId));
-                if (parsedBody.education.length > 0) {
-                    await tx.insert(education).values(
+        if (parsedBody.education) {
+            batchQueries.push(
+                db.delete(education).where(eq(education.resumeId, resumeId)),
+            );
+            if (parsedBody.education.length > 0) {
+                batchQueries.push(
+                    db.insert(education).values(
                         parsedBody.education.map((edu) => ({
                             ...edu,
                             resumeId: resumeId,
                         })),
-                    );
-                }
+                    ),
+                );
             }
-        });
+        }
 
-        return c.json({ success: true });
+        if (parsedBody.project) {
+            batchQueries.push(db.delete(project).where(eq(project.resumeId, resumeId)));
+            if (parsedBody.project.length > 0) {
+                batchQueries.push(
+                    db.insert(project).values(
+                        parsedBody.project.map((prj) => ({
+                            ...prj,
+                            resumeId: resumeId,
+                        })),
+                    ),
+                );
+            }
+        }
+
+        await db.batch(batchQueries as any);
+        return c.json({ success: true, message: "Resume data updated successfully" });
     } catch (error) {
         if (error instanceof ZodError) {
             return c.json(

@@ -17,14 +17,13 @@ const personalInfoUpdateSchema = z.object({
     profession: z.string().optional(),
     email: z.email().optional(),
     phone: z.string().optional(),
-    address: z.string().optional(),
     location: z.string().optional(),
     linkedIn: z.string().optional(),
     website: z.string().optional(),
 });
 
 const experienceUpdateSchema = z.object({
-    company: z.string(),
+    company: z.string().optional(),
     position: z.string().optional(),
     startDate: z.string().optional(),
     endDate: z.string().optional(),
